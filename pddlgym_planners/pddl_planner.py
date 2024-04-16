@@ -59,15 +59,15 @@ class PDDLPlanner(Planner):
                        remove_files=False):
         """PDDL-specific planning method.
         """
-        cmd_str = self._get_cmd_str(dom_file, prob_file, timeout)
-        start_time = time.time()
-        output = subprocess.getoutput(cmd_str)
+        cmd = self._get_cmd(dom_file, prob_file)
+        try:
+            output = subprocess.check_output(cmd, timeout=timeout, universal_newlines=True)
+        except subprocess.TimeoutExpired:
+            raise PlanningTimeout("Planning timed out!")
         if remove_files:
             os.remove(dom_file)
             os.remove(prob_file)
         self._cleanup()
-        if time.time()-start_time > timeout:
-            raise PlanningTimeout("Planning timed out!")
         pddl_plan = self._output_to_plan(output)
         if len(pddl_plan) > horizon:
             raise PlanningFailure("PDDL planning failed due to horizon")
@@ -76,23 +76,25 @@ class PDDLPlanner(Planner):
     def plan_from_sas(self, sas_file, horizon=np.inf, timeout=10):
         """PDDL-specific planning method using SAS file.
         """
-        cmd_str = self._get_cmd_str_searchonly(sas_file, timeout)
-        start_time = time.time()
-        output = subprocess.getoutput(cmd_str)
-        self._cleanup()
-        if time.time()-start_time > timeout:
+        cmd = self._get_cmd_searchonly(sas_file)
+        try:
+            output = subprocess.check_output(cmd, timeout=timeout, universal_newlines=True)
+        except subprocess.TimeoutExpired:
             raise PlanningTimeout("Planning timed out!")
+        self._cleanup()
         pddl_plan = self._output_to_plan(output)
         if len(pddl_plan) > horizon:
             raise PlanningFailure("PDDL planning failed due to horizon")
         return pddl_plan
 
     @abc.abstractmethod
-    def _get_cmd_str(self, dom_file, prob_file, timeout):
+    def _get_cmd(self, dom_file, prob_file) -> list[str]:
+        """Return a list containing the command and each argument."""
         raise NotImplementedError("Override me!")
 
     @abc.abstractmethod
-    def _get_cmd_str_searchonly(self, sas_file, timeout):
+    def _get_cmd_searchonly(self, sas_file) -> list[str]:
+        """Return a list containing the command and each argument."""
         raise NotImplementedError("Override me!")
 
     @abc.abstractmethod

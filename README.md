@@ -6,6 +6,8 @@ This is a lightweight Python interface for using off-the-shelf classical planner
 
 ## System Requirements
 
+To compile the planners you need a C++ compiler, CMake and GNU make. See [github.com/aibasel/downward](https://github.com/aibasel/downward) for more information.
+
 This repository has been mostly tested on MacOS Mojave and Catalina with Python 3.6. We would like to make it accessible on more systems; please let us know if you try another and run into any issues.
 
 ## Installation
@@ -19,7 +21,7 @@ This repository has been mostly tested on MacOS Mojave and Catalina with Python 
 
 **Important Note:** When you invoke a planner for the first time, the respective external package will be installed automatically. This will take up to a few minutes. This step will be skipped the next time you run the same planner.
 
-```
+```python
 import pddlgym
 from pddlgym_planners.ff import FF  # FastForward
 from pddlgym_planners.fd import FD  # FastDownward

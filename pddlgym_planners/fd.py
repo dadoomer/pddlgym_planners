@@ -31,20 +31,27 @@ class FD(PDDLPlanner):
         if not os.path.exists(self._exec):
             self._install_fd()
 
-    def _get_cmd_str(self, dom_file, prob_file, timeout):
+    def _get_cmd(self, dom_file, prob_file):
         sas_file = tempfile.NamedTemporaryFile(delete=False).name
-        timeout_cmd = "gtimeout" if sys.platform == "darwin" else "timeout"
-        cmd_str = "{} {} {} {} --sas-file {} {} {} {}".format(
-            timeout_cmd, timeout, self._exec, self._alias_flag, sas_file,
-            dom_file, prob_file, self._final_flags)
-        return cmd_str
+        cmd = [
+            self._exec,
+            *(self._alias_flag.split(" ")),
+            '--sas-file',
+            sas_file,
+            dom_file,
+            prob_file,
+            *(self._final_flags.split(" ")),
+        ]
+        cmd = [arg for arg in cmd if len(arg) > 0]
+        return cmd
 
-    def _get_cmd_str_searchonly(self, sas_file, timeout):
-        timeout_cmd = "gtimeout" if sys.platform == "darwin" else "timeout"
-        cmd_str = "{} {} {} {} --search {} {}".format(
-            timeout_cmd, timeout, self._exec, self._alias_flag,
-            sas_file, self._final_flags)
-        return cmd_str
+    def _get_cmd_searchonly(self, sas_file):
+        cmd = [
+            self._exec, self._alias_flag,
+            '--search',
+            sas_file, self._final_flags
+        ]
+        return cmd
 
     def _cleanup(self):
         """Run FD cleanup
@@ -96,7 +103,7 @@ class FD(PDDLPlanner):
                 output))
         if "Plan length: 0 step" in output:
             return []
-        
+
         fd_plan = re.findall(r"(.+) \(\d+?\)", output.lower())
         if not fd_plan:
             raise PlanningFailure("Plan not found with FD! Error: {}".format(
@@ -106,6 +113,6 @@ class FD(PDDLPlanner):
     def _install_fd(self):
         loc = os.path.dirname(self._exec)
         # Install and compile FD.
-        os.system("git clone {} {}".format(FD_URL, loc))
-        os.system("cd {} && ./build.py && cd -".format(loc))
+        subprocess.run(["git", "clone", FD_URL, loc])
+        subprocess.run("./build.py", cwd=loc)
         assert os.path.exists(self._exec)

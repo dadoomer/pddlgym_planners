@@ -7,6 +7,7 @@ import os
 import sys
 from pddlgym_planners.pddl_planner import PDDLPlanner
 from pddlgym_planners.planner import PlanningFailure
+import subprocess
 
 FF_URL = "https://fai.cs.uni-saarland.de/hoffmann/ff/FF-v2.3.tgz"
 FF_MAC_URL = "https://github.com/ronuchit/FF.git"
@@ -78,10 +79,10 @@ class FF(PDDLPlanner):
             os.system("git clone {} {}".format(FF_MAC_URL, loc))
         else:
             # Install FF directly from official website.
-            os.system("curl {} --output temp_ff_install.tgz".format(FF_URL))
-            os.system("mkdir {}".format(loc))
-            os.system("tar -xzvf temp_ff_install.tgz -C {} --strip-components 1".format(loc))
-            os.system("rm temp_ff_install.tgz")
+            subprocess.run(["curl", FF_URL, "--output", "temp_ff_install.tgz"])
+            os.mkdir(loc)
+            subprocess.run(["tar", "-xzvf", "temp_ff_install.tgz", "-C", loc, "--strip-components", "1"])
+            os.remove("temp_ff_install.tgz")
         # Compile FF.
-        os.system("cd {} && make && cd -".format(loc))
+        subprocess.run("make", cwd=loc)
         assert os.path.exists(self._exec)
